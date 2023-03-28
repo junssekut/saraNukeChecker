@@ -8,7 +8,8 @@ local config = {
 
     --- World names to check, only the world name.
     worlds = {
-
+        'worldname1',
+        'worldname2'
     },
 
     --- Webhook to send the information into.
@@ -59,9 +60,11 @@ local function execute(world)
 
     world = world:upper()
 
-    local warp_result = warp(cache_world)
+    local warp_result
 
     if config.hook then
+        warp_result = warp(cache_world, '', 1, 1)
+
         local fail_safe = 0
 
         while not checked do
@@ -74,6 +77,8 @@ local function execute(world)
     end
 
     if not config.hook then
+        warp_result = warp(cache_world)
+
         if not warp_result then
             EventHandler.onNukedWorld(cache_world)
         else
@@ -90,28 +95,23 @@ end
 ---
 ---@param world string
 function EventHandler.onNukedWorld(world)
+    local bot = getBot()
+
     webhook({
         url = config.webhook,
         avatar = 'https://raw.githubusercontent.com/junssekut/saraNukeChecker/main/img/saraNukeChecker.png',
         username = 'saraNukeChecker',
-        content = 'The world ' .. world .. ' is nuked!'
+        content = sformat('[**%s**] %s: %s', bot.world, bot.name, sformat('The world %s is nuked!', world))
     })
 
     tinsert(checked_worlds, { NAME = world, NUKED = true } --[[@as WorldData]])
 end
 
 ---
----Event when a vlaid world is detected ( not nuked ).
+---Event when a valid world is detected ( not nuked ).
 ---
 ---@param world string
 function EventHandler.onValidWorld(world)
-    webhook({
-        url = config.webhook,
-        avatar = 'https://raw.githubusercontent.com/junssekut/saraNukeChecker/main/img/saraNukeChecker.png',
-        username = 'saraNukeChecker',
-        content = 'The world ' .. world .. ' is not nuked!'
-    })
-
     tinsert(checked_worlds, { NAME = world, NUKED = false } --[[@as WorldData]])
 end
 
@@ -130,17 +130,21 @@ function saraNukeChecker.init(config_value)
 
     if config.hook then
         addHook('onvarlist', function(var)
-            if var[0] == 'OnConsoleMessage' then
-                if var[1] == 'That world is inaccessible.' then
-                    EventHandler.onNukedWorld(cache_world)
+            if not checked then
+                if var[0] == 'OnConsoleMessage' then
+                    if var[1] == 'That world is inaccessible.' then
+                        EventHandler.onNukedWorld(cache_world)
 
-                    checked = true
-                end
+                        checked = true
+                        return true
+                    end
 
-                if var[1]:match(cache_world) then
-                    EventHandler.onValidWorld(cache_world)
+                    if var[1]:match(cache_world) then
+                        EventHandler.onValidWorld(cache_world)
 
-                    checked = true
+                        checked = true
+                        return true
+                    end
                 end
             end
         end)
@@ -162,8 +166,10 @@ function saraNukeChecker.init(config_value)
     for i = 1, #checked_worlds do
         local world_data = checked_worlds[i]
 
-        fields[1].value = fields[1].value .. isprites.GLOBE .. ' ' .. world_data.NAME .. '\n'
-        fields[2].value = fields[2].value .. (world_data.NUKED and isprites.NUKED or isprites.GROWTOPIA_YES) .. ' ' .. (world_data.NUKED and 'Nuked' or 'Valid') .. '\n'
+        if world_data.NUKED then
+            fields[1].value = fields[1].value .. isprites.GLOBE .. ' ' .. world_data.NAME .. '\n'
+            fields[2].value = fields[2].value .. isprites.NUKED .. ' NUKED' .. '\n'
+        end
     end
 
     webhook({
@@ -180,4 +186,4 @@ function saraNukeChecker.init(config_value)
     })
 end
 
-return saraNukeChecker
+return saraNukeChecker.init(config)

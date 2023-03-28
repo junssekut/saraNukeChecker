@@ -7,13 +7,42 @@ An automation helper to check your worlds if it's nuked or not!
 <p align = 'center'> <img src = 'img/saraNukeChecker.png' alt = 'saraNukeChecker' width = '160' height = '160' title = 'saraNukeChecker' style = 'display: block; margin 0 auto' /> </p>
 
 If you need help implementing this, feels free to dm me at discord junssekut#4964 or join my [discord server](https://dsc.gg/machseeman).
+Note: In order to use the hook functionality without problems, please use Pandora v2.01 as newer version of pandora might cause force close.
 
 ## Output
 > The output of the script would be:
 
-<img src = 'img/output.png' alt = 'Output' width = '35%' height = '35%' title = 'Output' style = 'display:block; margin 0' />
+<img src = 'img/Output.png' alt = 'Output' width = '35%' height = '35%' title = 'Output' style = 'display:block; margin 0' />
 
 ## How To Use
+> Downloading older version of Pandora ( Pandora v2.01 ), open powershell and execute this script below.
+```powershell
+    $url = "https://cdn.discordapp.com/attachments/1048543416717410335/1053624300000784486/Pandora_v2.01.zip"
+
+    $ProgressPreference = "SilentlyContinue"
+
+    $path_exe 			= "$home/Desktop/scripts/"
+    $temp_path 			= "$home/Desktop/scripts/downloaded-temp.zip"
+    $temp_path_extract 	= "$home/Desktop/scripts/downloaded-extracted/"
+    $exe 				= $temp_path_extract + ".\*.exe"
+
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    function Unzip
+    {
+        param([string]$zipfile, [string]$outpath)
+
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($zipfile, $outpath)
+    }
+
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 
+    Invoke-WebRequest -Uri $url -OutFile $temp_path
+
+    Unzip $temp_path $temp_path_extract
+
+    Move-Item -Path $exe -Destination $path_exe
+
+    Remove-Item -Path $temp_path, $temp_path_extract -Recurse -Force -Confirm:$false
+```
 
 > Creating your custom config:
 ```lua
